@@ -1,0 +1,45 @@
+---
+
+- name: Fail on spaces in sites config names
+  ansible.builtin.assert:
+    that:
+      - "' ' not in item.key"
+  with_dict: "{{ nginx.sites }}"
+  no_log: true
+
+- name: Create nginx sites-avalable file
+  when:
+    - item.value.content is defined
+    - item.value.content != None
+    - item.value.content | length > 0
+  with_dict: "{{ nginx.sites }}"
+  ansible.builtin.template:
+    src: nginx.sites.j2
+    dest: "/etc/nginx/sites-available/{{ item.key }}"
+    mode: "0600"
+    owner: root
+    group: root
+  no_log: true
+  notify: (Re)start nginx service
+
+- name: Create nginx sites-enabled symlbolic link
+  when:
+    - item.value.enabled is defined
+    - item.value.enabled != None
+    - item.value.enabled | bool
+  with_dict: "{{ nginx.sites }}"
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{ item.key }}"
+    dest: "/etc/nginx/sites-enabled/{{ item.key }}"
+    state: link
+  no_log: true
+  notify: (Re)start nginx service
+
+- name: Delete nginx sites-enabled symbolic link
+  when: (item.value.enabled is not defined) or (item.value.enabled == None) or (not item.value.enabled | bool)
+  with_dict: "{{ nginx.sites }}"
+  ansible.builtin.file:
+    path: "/etc/nginx/sites-enabled/{{ item.key }}"
+    state: absent
+  no_log: true
+  notify: (Re)start nginx service

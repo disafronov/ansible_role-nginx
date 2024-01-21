@@ -1,1 +1,3 @@
-# ansible_role-template
+# ansible_role-nginx
+
+Install & configure nginx.

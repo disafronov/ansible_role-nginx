@@ -1,0 +1,23 @@
+---
+
+- name: Fail on spaces in snippets config names
+  ansible.builtin.assert:
+    that:
+      - "' ' not in item.key"
+  with_dict: "{{ nginx.snippets }}"
+  no_log: true
+
+- name: Create nginx snippets files
+  when:
+    - item.value is defined
+    - item.value != None
+    - item.value | length > 0
+  with_dict: "{{ nginx.snippets }}"
+  ansible.builtin.template:
+    src: nginx.snippets.j2
+    dest: "/etc/nginx/snippets/{{ item.key }}"
+    mode: "0600"
+    owner: root
+    group: root
+  no_log: true
+  notify: (Re)start nginx service

@@ -1,0 +1,27 @@
+---
+
+- name: Install nginx
+  ansible.builtin.package:
+    name: "{{ nginx.variant | default('nginx') }}"
+    state: present
+
+- name: Configure snippets
+  when:
+    - nginx.snippets is defined
+    - nginx.snippets != None
+  ansible.builtin.include_tasks:
+    file: snippets.yml
+
+- name: Configure conf.d
+  when:
+    - nginx.conf_d is defined
+    - nginx.conf_d != None
+  ansible.builtin.include_tasks:
+    file: conf_d.yml
+
+- name: Configure sites
+  when:
+    - nginx.sites is defined
+    - nginx.sites != None
+  ansible.builtin.include_tasks:
+    file: sites.yml
